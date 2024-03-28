@@ -31,3 +31,7 @@ Deploying CFL-Detection Streamlit Application on Heroku.
 ### Logs
 
 `heroku logs --tail -a <heroku-app-name>`
+
+### If lazy
+
+`.\deploy`

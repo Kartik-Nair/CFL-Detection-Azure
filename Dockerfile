@@ -9,6 +9,8 @@ RUN apt-get update \
     && ldconfig
 # Set the working directory in the container
 WORKDIR /app
+RUN mkdir output \
+    && chmod 777 output
 
 # Copy the current directory contents into the container at /app
 COPY . /app

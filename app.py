@@ -86,7 +86,7 @@ def calculate_distance_and_write_csv(
         np.array(core_seg_output_image), first_white_pixels_wall, last_white_pixels_wall
     )
     adjusted_distance = (distance / resized_image_shape[1]) * input_image_dims[1]
-    csv_file_path = os.path.join(os.curdir + "/output/output.csv")
+    csv_file_path = os.path.join(os.getcwd() + "/output/output.csv")
     with open(csv_file_path, mode=mode, newline="") as file:
         writer = csv.writer(file)
         writer.writerow(adjusted_distance)
