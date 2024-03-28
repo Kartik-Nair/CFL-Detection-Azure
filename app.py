@@ -8,7 +8,8 @@ import os
 import numpy as np
 
 from distance_calculator import calculate_distance
-from docker_utils import start_docker, cleanup
+
+# from docker_utils import start_docker, cleanup
 from wall_detector import detect_wall_edge
 
 
