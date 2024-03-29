@@ -1,11 +1,11 @@
 import csv
 import streamlit as st
 import requests
-import sys
 import json
 from PIL import Image
 import os
 import numpy as np
+import shutil
 
 from distance_calculator import calculate_distance
 
@@ -13,7 +13,6 @@ from distance_calculator import calculate_distance
 from wall_detector import detect_wall_edge
 
 
-# start_docker()
 # Inject custom CSS with st.markdown to change the button color
 st.markdown(
     """
@@ -100,7 +99,10 @@ def display_images(selected_image):
         # Display input image
         # input_image_path = os.path.join(os.curdir, "input", selected_image)
         st.write("INPUT IMAGE")
-        st.image(input_image, use_column_width=True)
+        st.image(
+            Image.open(selected_image).convert("RGB").resize((256, 256)),
+            use_column_width=True,
+        )
     with col6:
         # Perform CFL detection
         st.write("CORE SEGMENTATION")
@@ -146,7 +148,7 @@ with col3:
         wall_edge_output_image, first_white_pixels_wall, last_white_pixels_wall = (
             detect_wall_edge(file)
         )
-        output_dir = os.path.join(os.curdir + "/output/")
+        output_dir = os.path.join(os.getcwd() + "/output/")
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, mode=0o077)
         calculate_distance_and_write_csv(
@@ -180,8 +182,23 @@ else:
 # Display images based on selected image
 if selected_image:
     display_images(selected_image)
+    shutil.make_archive(
+        os.getcwd() + "/output", "zip", os.path.join(os.getcwd() + "/output/")
+    )
 
 
-# if st.button("Clean container for exit"):
-#     cleanup()
-#     sys.exit()
+def delete_archive_and_folder():
+    os.remove(os.getcwd() + "/output.zip")
+    shutil.rmtree(output_dir)
+    st.stop()
+
+
+if os.path.exists(os.getcwd() + "/output.zip"):
+    with open(os.getcwd() + "/output.zip", "rb") as fp:
+        btn = st.download_button(
+            label="Download output",
+            data=fp,
+            file_name="output.zip",
+            mime="application/zip",
+            on_click=delete_archive_and_folder,
+        )
