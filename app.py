@@ -140,7 +140,7 @@ with col3:
     #     st.write("CFL Detection Initiated...")
 
     if os.path.exists(os.path.join(os.getcwd() + "/output/output.csv")):
-        os.remove(os.getcwd() + "/output.zip")
+        os.remove(os.getcwd() + "/output.csv")
     for file in uploaded_files:
         input_image = Image.open(file).convert("RGB")
         print(input_image)
