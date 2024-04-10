@@ -160,8 +160,11 @@ with col3:
             input_image_dims,
             "a+",
         )
-        core_seg_output_image.save(output_dir + "core_" + file.name)
-        wall_edge_output_image.save(output_dir + "wall_" + file.name)
+        core_output_filename = os.path.join(output_dir, f"core_{file.name}")
+        wall_output_filename = os.path.join(output_dir, f"wall_{file.name}")
+        
+        core_seg_output_image.save(core_output_filename)
+        wall_edge_output_image.save(wall_output_filename)
 
 
 col5, col6, col7 = st.columns(3)
