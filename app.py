@@ -152,7 +152,7 @@ with col3:
         )
         output_dir = os.path.join(os.getcwd() + "/output/")
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir, mode=0o077)
+            os.makedirs(output_dir,exist_ok=True)
         calculate_distance_and_write_csv(
             core_seg_output_image,
             first_white_pixels_wall,
