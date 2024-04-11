@@ -75,21 +75,70 @@ def detect_cfl(selected_image):
     return core_seg_output_image
 
 
+def adjust_pixels(pixels, resized_image_shape, input_image_dims):
+    return (pixels / resized_image_shape[1]) * input_image_dims[1]
+
+
 def calculate_distance_and_write_csv(
     core_seg_output_image,
     first_white_pixels_wall,
     last_white_pixels_wall,
     input_image_dims,
     mode,
+    filename,
 ):
-    distance = calculate_distance(
-        np.array(core_seg_output_image), first_white_pixels_wall, last_white_pixels_wall
+    top_distance, bottom_distance, top_core, bottom_core, top_wall, bottom_wall = (
+        calculate_distance(
+            np.array(core_seg_output_image),
+            first_white_pixels_wall,
+            last_white_pixels_wall,
+        )
     )
-    adjusted_distance = (distance / resized_image_shape[1]) * input_image_dims[1]
-    with tempfile.NamedTemporaryFile(mode='w', newline='', delete=False) as tmpfile:
+    total_distance = top_distance + bottom_distance
+    adjusted_top_distance = adjust_pixels(
+        top_distance, resized_image_shape, input_image_dims
+    )
+    adjusted_bottom_distance = adjust_pixels(
+        bottom_distance, resized_image_shape, input_image_dims
+    )
+    adjusted_total_distance = adjust_pixels(
+        total_distance,resized_image_shape, input_image_dims
+    )
+    adjusted_top_wall = adjust_pixels(top_wall, resized_image_shape, input_image_dims)
+    adjusted_bottom_wall = adjust_pixels(
+        bottom_wall, resized_image_shape, input_image_dims
+    )
+    adjusted_top_core = adjust_pixels(top_core, resized_image_shape, input_image_dims)
+    adjusted_bottom_core = adjust_pixels(
+        bottom_core, resized_image_shape, input_image_dims
+    )
+    with tempfile.NamedTemporaryFile(mode="w", newline="", delete=False) as tmpfile:
         writer = csv.writer(tmpfile)
-        writer.writerow(adjusted_distance)
-    
+        writer.writerow(
+            [
+                "Filename",
+                "Total distance",
+                "Top CFL distance",
+                "Bottom CFL distance",
+                "Top wall coordinates",
+                "Bottom wall coordinates",
+                "Top core coordinates",
+                "Bottom core coordinates",
+            ]
+        )
+        writer.writerow(
+            [
+                filename,
+                str(adjusted_total_distance),
+                str(adjusted_top_distance),
+                str(adjusted_bottom_distance),
+                str(adjusted_top_wall),
+                str(adjusted_bottom_wall),
+                str(adjusted_top_core),
+                str(adjusted_bottom_core),
+            ]
+        )
+
     # If you want to save the temporary file to a specific path afterward
     csv_file_path = os.path.join(os.getcwd(), "output", "output.csv")
     shutil.move(tmpfile.name, csv_file_path)
@@ -156,17 +205,18 @@ with col3:
         )
         output_dir = os.path.join(os.getcwd() + "/output/")
         if not os.path.exists(output_dir):
-            os.makedirs(output_dir,exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
         calculate_distance_and_write_csv(
             core_seg_output_image,
             first_white_pixels_wall,
             last_white_pixels_wall,
             input_image_dims,
             "a+",
+            file.name,
         )
         core_output_filename = os.path.join(output_dir, f"core_{file.name}")
         wall_output_filename = os.path.join(output_dir, f"wall_{file.name}")
-        
+
         core_seg_output_image.save(core_output_filename)
         wall_edge_output_image.save(wall_output_filename)
 
