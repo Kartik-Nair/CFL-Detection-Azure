@@ -5,6 +5,7 @@ import json
 from PIL import Image
 import os
 import numpy as np
+import tempfile
 import shutil
 
 from distance_calculator import calculate_distance
@@ -85,10 +86,13 @@ def calculate_distance_and_write_csv(
         np.array(core_seg_output_image), first_white_pixels_wall, last_white_pixels_wall
     )
     adjusted_distance = (distance / resized_image_shape[1]) * input_image_dims[1]
-    csv_file_path = os.path.join(os.getcwd() + "/output/output.csv")
-    with open(csv_file_path, mode=mode, newline="") as file:
-        writer = csv.writer(file)
+    with tempfile.NamedTemporaryFile(mode='w', newline='', delete=False) as tmpfile:
+        writer = csv.writer(tmpfile)
         writer.writerow(adjusted_distance)
+    
+    # If you want to save the temporary file to a specific path afterward
+    csv_file_path = os.path.join(os.getcwd(), "output", "output.csv")
+    shutil.move(tmpfile.name, csv_file_path)
 
 
 # Function to display images based on dropdown selection
