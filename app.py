@@ -78,6 +78,28 @@ def detect_cfl(selected_image):
 def adjust_pixels(pixels, resized_image_shape, input_image_dims):
     return (pixels / resized_image_shape[1]) * input_image_dims[1]
 
+csv_file_path = os.path.join(os.getcwd(), "output", "output.csv")
+output_dir = os.path.join(os.getcwd() + "/output/")
+
+def ensure_directory_exists():
+    """ Ensure the directory exists, and if not, create it. """
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"Directory created at: {output_dir}")
+
+def get_temp_csv_file():
+    """ Ensure the CSV file exists and is ready to receive data. Initialize with headers if newly created. """
+    ensure_directory_exists()
+    if not os.path.isfile(csv_file_path):
+        with open(csv_file_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([
+                "Filename", "Total distance", "Top CFL distance", "Bottom CFL distance",
+                "Top wall coordinates", "Bottom wall coordinates",
+                "Top core coordinates", "Bottom core coordinates"
+            ])
+        print(f"CSV file created with headers at: {csv_file_path}")
+    return csv_file_path
 
 def calculate_distance_and_write_csv(
     core_seg_output_image,
@@ -85,64 +107,43 @@ def calculate_distance_and_write_csv(
     last_white_pixels_wall,
     input_image_dims,
     mode,
-    filename,
+    filename
 ):
-    top_distance, bottom_distance, top_core, bottom_core, top_wall, bottom_wall = (
-        calculate_distance(
-            np.array(core_seg_output_image),
-            first_white_pixels_wall,
-            last_white_pixels_wall,
-        )
-    )
-    total_distance = top_distance + bottom_distance
-    adjusted_top_distance = adjust_pixels(
-        top_distance, resized_image_shape, input_image_dims
-    )
-    adjusted_bottom_distance = adjust_pixels(
-        bottom_distance, resized_image_shape, input_image_dims
-    )
-    adjusted_total_distance = adjust_pixels(
-        total_distance,resized_image_shape, input_image_dims
-    )
-    adjusted_top_wall = adjust_pixels(top_wall, resized_image_shape, input_image_dims)
-    adjusted_bottom_wall = adjust_pixels(
-        bottom_wall, resized_image_shape, input_image_dims
-    )
-    adjusted_top_core = adjust_pixels(top_core, resized_image_shape, input_image_dims)
-    adjusted_bottom_core = adjust_pixels(
-        bottom_core, resized_image_shape, input_image_dims
-    )
-    with tempfile.NamedTemporaryFile(mode="w", newline="", delete=False) as tmpfile:
-        writer = csv.writer(tmpfile)
-        writer.writerow(
-            [
-                "Filename",
-                "Total distance",
-                "Top CFL distance",
-                "Bottom CFL distance",
-                "Top wall coordinates",
-                "Bottom wall coordinates",
-                "Top core coordinates",
-                "Bottom core coordinates",
-            ]
-        )
-        writer.writerow(
-            [
-                filename,
-                str(adjusted_total_distance),
-                str(adjusted_top_distance),
-                str(adjusted_bottom_distance),
-                str(adjusted_top_wall),
-                str(adjusted_bottom_wall),
-                str(adjusted_top_core),
-                str(adjusted_bottom_core),
-            ]
-        )
+    # Get or create the temporary CSV file
+    csv_file_path = get_temp_csv_file()
 
-    # If you want to save the temporary file to a specific path afterward
-    csv_file_path = os.path.join(os.getcwd(), "output", "output.csv")
-    shutil.move(tmpfile.name, csv_file_path)
+    # Calculate distances based on provided image data
+    distances = calculate_distance(
+        np.array(core_seg_output_image),
+        first_white_pixels_wall,
+        last_white_pixels_wall
+    )
+    top_distance, bottom_distance, top_core, bottom_core, top_wall, bottom_wall = distances
 
+    # Adjust distances using the provided shape and dimensions
+    adjusted_distances = {
+        'top_distance': adjust_pixels(top_distance, resized_image_shape, input_image_dims),
+        'bottom_distance': adjust_pixels(bottom_distance, resized_image_shape, input_image_dims),
+        'total_distance': adjust_pixels(top_distance + bottom_distance, resized_image_shape, input_image_dims),
+        'top_wall': adjust_pixels(top_wall, resized_image_shape, input_image_dims),
+        'bottom_wall': adjust_pixels(bottom_wall, resized_image_shape, input_image_dims),
+        'top_core': adjust_pixels(top_core, resized_image_shape, input_image_dims),
+        'bottom_core': adjust_pixels(bottom_core, resized_image_shape, input_image_dims)
+    }
+
+    # Write the adjusted data to the CSV file
+    with open(csv_file_path, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            filename,
+            str(adjusted_distances['total_distance']),
+            str(adjusted_distances['top_distance']),
+            str(adjusted_distances['bottom_distance']),
+            str(adjusted_distances['top_wall']),
+            str(adjusted_distances['bottom_wall']),
+            str(adjusted_distances['top_core']),
+            str(adjusted_distances['bottom_core']),
+        ])
 
 # Function to display images based on dropdown selection
 def display_images(selected_image):
@@ -170,6 +171,7 @@ def display_images(selected_image):
 # Buttons for selecting input image
 col1, col2 = st.columns(2)
 with col1:
+    get_temp_csv_file()
     input_type = st.radio("Select Input Type:", ("Single Image", "Batch Images"))
 
 with col2:
