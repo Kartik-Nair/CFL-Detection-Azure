@@ -60,4 +60,4 @@ def calculate_distance(core_img, first_white_pixels_wall, last_white_pixels_wall
     first_white_pixels_core, last_white_pixels_core = find_core(core_img)
     distance_top = np.abs(first_white_pixels_wall - first_white_pixels_core)
     distance_bottom = np.abs(last_white_pixels_core - last_white_pixels_wall)
-    return distance_top + distance_bottom
+    return distance_top, distance_bottom, first_white_pixels_core, last_white_pixels_core, first_white_pixels_wall, last_white_pixels_wall
